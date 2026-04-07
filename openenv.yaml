@@ -1,0 +1,29 @@
+name: green_route_optimizer
+version: "1.0"
+description: "An OpenEnv-compatible logistics optimization environment focused on sustainable fleet routing, delivery completion, and carbon-aware decision making."
+entrypoint: "src.api.app:app"
+framework: "fastapi"
+domain: "logistics"
+
+tasks:
+  - id: "basic_delivery"
+    difficulty: "easy"
+    description: "Deliver a single nearby package successfully using the available fleet."
+    reward_threshold: 0.8
+
+  - id: "fleet_balancing"
+    difficulty: "medium"
+    description: "Balance multiple delivery assignments across trucks while avoiding inefficient routing and energy waste."
+    reward_threshold: 0.6
+
+  - id: "carbon_challenge"
+    difficulty: "hard"
+    description: "Maximize successful deliveries while minimizing CO2 emissions and avoiding stranded trucks."
+    reward_threshold: 0.5
+
+api:
+  reset: "/reset"
+  step: "/step"
+  state: "/state"
+  grade: "/grade"
+  health: "/health"

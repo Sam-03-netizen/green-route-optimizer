@@ -1,0 +1,13 @@
+[project]
+name = "green-route-optimizer"
+version = "0.1.0"
+description = "Green Logistics RL Environment for OpenEnv"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic"
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"

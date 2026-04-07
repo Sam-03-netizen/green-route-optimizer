@@ -1,3 +1,12 @@
+---
+title: Green Route Optimizer
+emoji: 🚚
+colorFrom: green
+colorTo: blue
+sdk: docker
+pinned: false
+---
+
 # 🚚 Green Route Optimizer: Sustainable Logistics OpenEnv
 
 **Green Route Optimizer** is an OpenEnv-compatible benchmark environment for evaluating agents on sustainable logistics decision-making tasks.

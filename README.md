@@ -443,6 +443,7 @@ This is not required for agent evaluation, but helps visualize environment behav
 
 # 📌 Evaluation Summary
 
+This environment supports both reinforcement learning and rule-based agents, though no training loop is enforced.
 This project is designed to satisfy the main OpenEnv benchmark expectations:
 
 - Real-world utility

@@ -3,22 +3,32 @@ import json
 import requests
 from openai import OpenAI
 
-# LLM proxy variables injected by validator
-API_BASE_URL = os.environ["API_BASE_URL"]
-API_KEY = os.environ["API_KEY"]
+# -------------------------------
+# Required validator-injected vars
+# -------------------------------
+API_BASE_URL = os.environ["API_BASE_URL"]   # LLM proxy
+API_KEY = os.environ["API_KEY"]             # LLM proxy key
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
 
-# Your environment backend URL (local/default)
-ENV_BASE_URL = os.getenv("ENV_BASE_URL", "http://127.0.0.1:8000")
+# -------------------------------
+# Your deployed environment URL
+# -------------------------------
+ENV_BASE_URL = os.getenv(
+    "ENV_BASE_URL",
+    "https://sarang-03-ari-green-route-optimizer.hf.space"
+)
 
-# OpenAI client must use ONLY the injected proxy URL
+# -------------------------------
+# OpenAI client MUST use validator proxy
+# -------------------------------
 client = OpenAI(
     api_key=API_KEY,
     base_url=API_BASE_URL
 )
 
+
 def ping_llm():
-    """Mandatory LLM proxy call for Phase 2 validation."""
+    """Mandatory proxy call for Phase 2."""
     try:
         response = client.chat.completions.create(
             model=MODEL_NAME,
@@ -70,13 +80,18 @@ def choose_action(task_name: str, observation: dict) -> dict:
 def run_task(task_name: str):
     print(f"[START] task={task_name} env=green_logistics model={MODEL_NAME}")
 
-    reset_response = requests.post(
-        f"{ENV_BASE_URL}/reset",
-        params={"task_id": task_name}
-    )
+    try:
+        reset_response = requests.post(
+            f"{ENV_BASE_URL}/reset",
+            params={"task_id": task_name},
+            timeout=30
+        )
+    except Exception as e:
+        print(f"[END] success=false steps=0 score=0.00 rewards= error=reset_failed_{e}")
+        return
 
     if reset_response.status_code != 200:
-        print(f"[END] success=false steps=0 score=0.00 rewards= error=reset_failed")
+        print(f"[END] success=false steps=0 score=0.00 rewards= error=reset_status_{reset_response.status_code}")
         return
 
     obs = reset_response.json()
@@ -92,13 +107,18 @@ def run_task(task_name: str):
             print(f"[STEP] step={step_count+1} action=null reward=0.00 done=true error=no_valid_action")
             break
 
-        step_response = requests.post(
-            f"{ENV_BASE_URL}/step",
-            json=action
-        )
+        try:
+            step_response = requests.post(
+                f"{ENV_BASE_URL}/step",
+                json=action,
+                timeout=30
+            )
+        except Exception as e:
+            print(f"[STEP] step={step_count+1} action={json.dumps(action)} reward=0.00 done=true error=step_failed_{e}")
+            break
 
         if step_response.status_code != 200:
-            print(f"[STEP] step={step_count+1} action={json.dumps(action)} reward=0.00 done=true error=step_failed")
+            print(f"[STEP] step={step_count+1} action={json.dumps(action)} reward=0.00 done=true error=step_status_{step_response.status_code}")
             break
 
         result = step_response.json()
@@ -120,14 +140,17 @@ def run_task(task_name: str):
             f"error={error_msg}"
         )
 
-    grade_response = requests.get(
-        f"{ENV_BASE_URL}/grade",
-        params={"task_id": task_name}
-    )
-
-    if grade_response.status_code == 200:
-        score = grade_response.json().get("score", 0.0)
-    else:
+    try:
+        grade_response = requests.get(
+            f"{ENV_BASE_URL}/grade",
+            params={"task_id": task_name},
+            timeout=30
+        )
+        if grade_response.status_code == 200:
+            score = grade_response.json().get("score", 0.0)
+        else:
+            score = 0.0
+    except Exception:
         score = 0.0
 
     success = score >= 0.5
@@ -142,7 +165,7 @@ def run_task(task_name: str):
 
 
 def run_inference():
-    # MUST happen before tasks so validator sees proxy traffic
+    # Phase 2 requires at least one LLM proxy call
     ping_llm()
 
     tasks = [

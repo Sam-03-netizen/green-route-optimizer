@@ -1,17 +1,10 @@
 import os
 import requests
 import json
-from openai import OpenAI
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 MODEL_NAME = os.getenv("MODEL_NAME", "rule_based_baseline")
-HF_TOKEN = os.getenv("HF_TOKEN", "dummy_token_not_used")
-
-# Checklist-friendly client initialization
-client = OpenAI(
-    api_key=HF_TOKEN,
-    base_url=f"{API_BASE_URL}/v1" if "127.0.0.1" not in API_BASE_URL else API_BASE_URL
-)
+HF_TOKEN = os.getenv("HF_TOKEN")
 
 
 def choose_action(task_name: str, observation: dict) -> dict:

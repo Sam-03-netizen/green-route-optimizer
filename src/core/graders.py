@@ -1,11 +1,23 @@
+def clamp_score(score: float) -> float:
+    """
+    OpenEnv validator requires score to be strictly between 0 and 1.
+    So never return exactly 0.0 or 1.0
+    """
+    if score <= 0.0:
+        return 0.01
+    if score >= 1.0:
+        return 0.99
+    return round(score, 3)
+
+
 def grade_basic_delivery(delivered_count, total_orders, total_co2, stranded):
     """
     Easy task:
     Full score only if the single package is delivered and no truck is stranded.
     """
     if stranded > 0:
-        return 0.0
-    return 1.0 if delivered_count >= 1 else 0.0
+        return 0.01
+    return 0.99 if delivered_count >= 1 else 0.01
 
 
 def grade_fleet_optimization(delivered_count, total_orders, total_co2, stranded):
@@ -14,11 +26,12 @@ def grade_fleet_optimization(delivered_count, total_orders, total_co2, stranded)
     Partial credit for deliveries, with a penalty if any truck gets stranded.
     """
     if total_orders == 0:
-        return 0.0
+        return 0.01
 
     base_score = delivered_count / total_orders
     penalty = 0.2 if stranded > 0 else 0.0
-    return round(max(0.0, min(base_score - penalty, 1.0)), 3)
+    score = max(0.0, min(base_score - penalty, 1.0))
+    return clamp_score(score)
 
 
 def grade_carbon_challenge(delivered_count, total_orders, total_co2, stranded):
@@ -27,14 +40,14 @@ def grade_carbon_challenge(delivered_count, total_orders, total_co2, stranded):
     Rewards delivery completion, but penalizes high CO2 output.
     """
     if total_orders == 0:
-        return 0.0
+        return 0.01
 
     delivery_ratio = delivered_count / total_orders
     co2_penalty = min(0.5, total_co2 / 1000.0)
     stranded_penalty = 0.2 if stranded > 0 else 0.0
 
     score = delivery_ratio - co2_penalty - stranded_penalty
-    return round(max(0.0, min(score, 1.0)), 3)
+    return clamp_score(score)
 
 
 def extract_metrics_from_state(state: dict):
@@ -57,7 +70,7 @@ def extract_metrics_from_state(state: dict):
 def grade_task(task_id: str, state: dict) -> float:
     """
     Main task dispatcher.
-    Returns a normalized score in [0,1].
+    Returns a normalized score strictly within (0,1).
     """
     delivered_count, total_orders, total_co2, stranded = extract_metrics_from_state(state)
 
@@ -70,4 +83,4 @@ def grade_task(task_id: str, state: dict) -> float:
     elif task_id == "carbon_challenge":
         return grade_carbon_challenge(delivered_count, total_orders, total_co2, stranded)
 
-    return 0.0
+    return 0.01
